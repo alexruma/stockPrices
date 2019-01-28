@@ -1,0 +1,271 @@
+/*let requestURL='https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=MSFT&apikey=LCG4T2ZU5WDQAJO6';
+
+let request = new XMLHttpRequest();
+   
+    request.open('GET', requestURL, true);
+    request.responseType = 'json';
+    request.send();
+    
+    request.onload = function() {
+      let json=request.response;
+ 
+      
+   
+   
+       apiRun(json);
+     
+   
+}
+function apiRun(val){
+ alert('go')
+  console.log(val)
+}
+*/
+
+
+//Creates JSON object of ticker symbols and name for search purposes.
+let tickerJSON;
+let tickerURL="https://raw.githubusercontent.com/alexruma/stockTickerJSON/master/JSON";
+let tickerRequest= new XMLHttpRequest();
+tickerRequest.open('GET',tickerURL, true);
+tickerRequest.responseType='json';
+tickerRequest.send();
+tickerRequest.onload=function(){
+  tickerJSON=tickerRequest.response;
+  
+ 
+  
+}
+
+//Calls stock price API for chosen ticker symbol.
+function stockSearchCall(val,date){
+  
+  val=val.toUpperCase();
+  
+  let requestURL='https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol='+val+'&apikey=LCG4T2ZU5WDQAJO6';
+  
+  let request = new XMLHttpRequest();
+  
+    request.open('GET', requestURL, true);
+    request.responseType = 'json';
+    request.send();
+    
+    request.onload = function() {
+      
+      let stockJson=request.response;
+      stockSearch(stockJson,date);
+      
+}
+}
+//Displays stock price following API call.
+function stockSearch(JSON, date){
+ 
+console.log('then' +moment(date).format('dddd'));
+ 
+  let priceDisplay=document.getElementById('price-display');
+    document.getElementById('search-dropdown').innerHTML="";
+  priceDisplay.innerHTML="";
+   
+  let currentSymbol=JSON['Meta Data']["2. Symbol"];
+  
+  let dailyPrices=JSON["Time Series (Daily)"];
+ 
+  
+  let dateDiv=document.createElement('div');
+  dateDiv.innerText=date;
+let symbolDiv=document.createElement('div');
+   
+  symbolDiv.innerText=currentSymbol;
+  console.log(dailyPrices[date])
+  let priceDiv=document.createElement('div');
+  
+  priceDiv.innerText="$"+dailyPrices[date]['4. close'];
+  
+
+  
+  //Append divs
+  priceDisplay.appendChild(symbolDiv);
+    priceDisplay.appendChild(dateDiv);
+    priceDisplay.appendChild(priceDiv);
+  
+//Chart event listener
+  document.getElementById('chart-generate').addEventListener('click',function(){alert('okay');
+  makeChart(dailyPrices,date);                                          
+  });
+ 
+}
+
+//Search autocomplete function.
+function autoComplete(input){
+  let dropdown=document.getElementById('search-dropdown');
+  dropdown.innerHTML="";
+  if(input.length>=3){
+    let slicedInput=input.slice(0,input.length).toUpperCase();
+    tickerJSON.forEach(val=>{
+    
+      let slicedVal=val.Name.slice(0,input.length).toUpperCase();
+      if(slicedVal==slicedInput){
+        //appends matching values to dropdown.
+        let stockDiv=document.createElement('div');
+        stockDiv.innerText=val.Name+" ("+val.Symbol+")";
+        stockDiv.className='dropdown-item';
+        stockDiv.id=val.Symbol;
+        dropdown.appendChild(stockDiv);
+        
+      };
+    });
+    //Autocomplete suggestion item select listeners.
+    dropdownItems=document.getElementsByClassName('dropdown-item');
+  for(let i=0; i<dropdownItems.length; i++){
+    dropdownItems[i].addEventListener('click', function(){
+      document.getElementById('stock-input').value=dropdownItems[i].id;
+      });
+    };
+  };
+};
+//end autoComplete() 
+
+//Autocomplete item selection function.
+function autoCompleteClick(val){
+  document.getElementById('stock-input').value=val;
+  scroll(0,0)
+}
+
+//Event listeners:
+document.getElementById('stock-submit').addEventListener('click',function(){
+  let tickerSymbol=document.getElementById('stock-input').value;
+  
+    let today= new Date();
+  let date=today.getDate();
+  if (date < 10) {
+  date = '0' + date;
+}
+  let month=today.getMonth()+1;
+  if (month < 10) {
+  month = '0' + month;
+}
+  let year=today.getYear()+1900;
+  let totalDate=year+'-'+month+'-'+date;
+   let dateChosen=document.getElementById('stock-date').value;
+      
+  if (dateChosen==""){
+  dateChosen=totalDate;};
+  let weekday=dateChosen;
+  weekday=moment(weekday).format('dddd');
+  //if date called is weekend, alters dateChosen to the prior Friday. This is necessary as the API only contains prices for dates that fell on a weekday.
+  if (weekday=='Sunday'){
+    dateChosen=moment(dateChosen ).subtract(2,'days')
+   dateChosen=moment(dateChosen).format('YYYY-MM-DD');
+    
+  };
+  if (weekday=='Saturday'){
+    dateChosen=moment(dateChosen ).subtract(1,'days')
+   dateChosen=moment(dateChosen).format('YYYY-MM-DD');
+    
+  };
+  
+  stockSearchCall(tickerSymbol, dateChosen);
+    
+});
+
+//autoComplete listener. Triggered by search bar input.
+
+document.getElementById('stock-input').addEventListener('input',function(){
+  autoComplete(document.getElementById('stock-input').value);
+});
+ let dropdownItems=document.getElementsByClassName('dropdown-item');
+
+
+
+
+
+//https://www.alphavantage.co/documentation/
+
+function makeChart(JSON,date){
+ 
+  let dateDataArr=[date];
+  let priceDataArr=[];
+  while (dateDataArr.length<30){
+    date=moment(date).subtract(1,'days');
+    date=moment(date).format('YYYY-MM-DD');
+   
+   //This while loop removes weekends and other days the market was closed
+  while(JSON.hasOwnProperty(date)==false){
+    date=moment(date).subtract(1,'days');
+       date=moment(date).format('YYYY-MM-DD');
+    };
+    dateDataArr.unshift(date);
+  }
+  console.log(dateDataArr);
+  dateDataArr.forEach(val=>{
+    let price=JSON[val]["4. close"];
+    priceDataArr.push(Number(price));
+  });
+  console.log(priceDataArr);
+  //setting y axis min and max
+    let yMin=priceDataArr[0]/1.15;
+  if(priceDataArr[0]<15){
+    yMin=0;
+  };
+ let yMax=priceDataArr[0]*1.2;
+   
+  
+  
+ new Chart(document.getElementById("line-chart"), {
+  type: 'line',
+  data: {
+    labels:dateDataArr,
+    datasets: [{ 
+        data: priceDataArr,
+        label: "Past 30 days",
+        borderColor: "#3e95cd",
+        fill: false
+      }]
+    
+  },
+  /* coding out the axis options for now
+  options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    suggestedMin: yMin,
+                    suggestedMax: yMax
+                }
+            }]
+        }
+  } */
+});
+  
+}
+
+
+
+//console.log(moment(minus60).format('YYYY-MM-DD'));
+
+
+
+
+
+
+function test(){
+  new Chart(document.getElementById("line-chart"), {
+    type: 'line',
+    data: {
+        datasets: [{
+            label: 'First dataset',
+            data: [0, 20, 40, 50]
+        }],
+        labels: ['January', 'February', 'March', 'April']
+    },
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    suggestedMin: 50,
+                    suggestedMax: 300
+                }
+            }]
+        }
+    }
+});
+}
