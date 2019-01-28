@@ -1,0 +1,11 @@
+.dropdown-item:hover{
+  cursor: pointer;
+  background-color:#f7e66a;
+}
+#stock-submit{
+  cursor: pointer;
+}
+#line-chart-div{
+  width:55%;
+  height:45%;
+}
