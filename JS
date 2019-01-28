@@ -60,7 +60,7 @@ function stockSearchCall(val,date){
 //Displays stock price following API call.
 function stockSearch(JSON, date){
  
-console.log('then' +moment(date).format('dddd'));
+
  
   let priceDisplay=document.getElementById('price-display');
     document.getElementById('search-dropdown').innerHTML="";
@@ -74,9 +74,9 @@ console.log('then' +moment(date).format('dddd'));
   let dateDiv=document.createElement('div');
   dateDiv.innerText=date;
 let symbolDiv=document.createElement('div');
-   
+  
   symbolDiv.innerText=currentSymbol;
-  console.log(dailyPrices[date])
+ 
   let priceDiv=document.createElement('div');
   
   priceDiv.innerText="$"+dailyPrices[date]['4. close'];
@@ -89,7 +89,7 @@ let symbolDiv=document.createElement('div');
     priceDisplay.appendChild(priceDiv);
   
 //Chart event listener
-  document.getElementById('chart-generate').addEventListener('click',function(){alert('okay');
+  document.getElementById('chart-generate').addEventListener('click',function(){
   makeChart(dailyPrices,date);                                          
   });
  
@@ -185,7 +185,10 @@ function makeChart(JSON,date){
  
   let dateDataArr=[date];
   let priceDataArr=[];
-  while (dateDataArr.length<30){
+  let historyNum=document.querySelector('input[name="history-range"]:checked').value;
+  let historyText=document.querySelector('input[name="history-range"]:checked').innerText;
+  alert(historyText)
+  while (dateDataArr.length<historyNum){
     date=moment(date).subtract(1,'days');
     date=moment(date).format('YYYY-MM-DD');
    
@@ -203,11 +206,11 @@ function makeChart(JSON,date){
   });
   console.log(priceDataArr);
   //setting y axis min and max
-    let yMin=priceDataArr[0]/1.15;
-  if(priceDataArr[0]<15){
+    let yMin=priceDataArr[0]/1.11;
+  if(priceDataArr[0]<12){
     yMin=0;
   };
- let yMax=priceDataArr[0]*1.2;
+ let yMax=priceDataArr[0]*1.11;
    
   
   
@@ -217,7 +220,7 @@ function makeChart(JSON,date){
     labels:dateDataArr,
     datasets: [{ 
         data: priceDataArr,
-        label: "Past 30 days",
+        label: 'historyText',
         borderColor: "#3e95cd",
         fill: false
       }]
